@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, CheckCircle2, AlertCircle, FileCheck, Clock, Video, Cpu,
-  Tag, Activity, Camera as CameraIcon, Store as StoreIcon, ChevronRight,
+  Tag, Activity, Camera as CameraIcon, Store as StoreIcon, ChevronRight, Check
 } from 'lucide-react';
 import { useApp, useAlertById, useCameraById, useStoreById } from '@/store/AppContext';
 import { ALERT_TYPE_META, PRIORITY_META } from '@/types';
@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { PriorityBadge, StatusBadge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { VideoPlayer } from '@/components/alerts/VideoPlayer';
-import { formatDuration, formatDateLong, formatTimeShort, classNames } from '@/lib/format';
+import { formatDuration, formatDateLong, classNames } from '@/lib/format';
 import { toast } from '@/components/ui/Toast';
 
 export function AlertDetailsPage() {
@@ -20,7 +20,7 @@ export function AlertDetailsPage() {
   const alert = useAlertById(id);
   const camera = useCameraById(alert?.cameraId);
   const store = useStoreById(alert?.storeId);
-  const { updateAlertStatus, cameras } = useApp();
+  const { updateAlertStatus } = useApp();
 
   if (!alert) {
     return (
@@ -37,8 +37,8 @@ export function AlertDetailsPage() {
 
   const meta = ALERT_TYPE_META[alert.type];
 
-  function handleStatusChange(newStatus: AlertStatus) {
-    updateAlertStatus(alert!.id, newStatus);
+  async function handleStatusChange(newStatus: AlertStatus) {
+    await updateAlertStatus(alert!.id, newStatus);
     const labels: Record<AlertStatus, string> = { new: 'marked as new', acknowledged: 'acknowledged', needs_review: 'marked for review', resolved: 'resolved' };
     toast('success', `Alert ${labels[newStatus]}.`);
   }
@@ -48,7 +48,7 @@ export function AlertDetailsPage() {
   const canReview = alert.status === 'new';
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6 animate-fade-in max-w-6xl mx-auto">
       {/* Back link */}
       <button
         onClick={() => navigate('/alerts')}
@@ -58,190 +58,128 @@ export function AlertDetailsPage() {
         Back to Alerts
       </button>
 
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <div className={classNames(
-            'w-12 h-12 rounded-xl border flex items-center justify-center flex-shrink-0',
-            alert.priority === 'critical' ? 'bg-danger-500/10 border-danger-500/30 text-danger-400'
-              : alert.priority === 'high' ? 'bg-warning-500/10 border-warning-500/30 text-warning-400'
-              : 'bg-steel-600/10 border-steel-600/30 text-steel-400',
-          )}>
-            {meta.domain === 'inside' ? <AlertCircle size={24} /> : <Activity size={24} />}
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-white">{meta.label}</h1>
-            <div className="flex items-center gap-2 mt-1 text-sm text-ink-400 flex-wrap">
-              <span className="flex items-center gap-1"><CameraIcon size={14} /> {camera?.name}</span>
-              <span className="text-ink-600">·</span>
-              <span className="flex items-center gap-1"><StoreIcon size={14} /> {store?.name}</span>
+      {/* Main Incident Card */}
+      <Card noPadding className="border-ink-700 overflow-hidden shadow-2xl">
+        {/* Header */}
+        <div className="bg-ink-950 p-6 border-b border-ink-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className={classNames(
+              'w-12 h-12 rounded-xl border flex items-center justify-center flex-shrink-0',
+              alert.priority === 'critical' ? 'bg-danger-500/10 border-danger-500/30 text-danger-400'
+                : alert.priority === 'high' ? 'bg-warning-500/10 border-warning-500/30 text-warning-400'
+                : 'bg-steel-600/10 border-steel-600/30 text-steel-400',
+            )}>
+              {meta.domain === 'inside' ? <AlertCircle size={24} /> : <Activity size={24} />}
             </div>
-            <div className="text-sm text-ink-400 mt-0.5">{formatDateLong(alert.timestamp)}</div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          <PriorityBadge priority={alert.priority} />
-          <StatusBadge status={alert.status} />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-        {/* Left: Video + sequence */}
-        <div className="xl:col-span-2 space-y-5">
-          {/* Video player */}
-          <VideoPlayer
-            cameraName={camera?.name ?? 'Unknown'}
-            location={camera?.location ?? ''}
-            durationSec={alert.clipDurationSec}
-            confidence={alert.confidence}
-          />
-
-          {/* Alert summary */}
-          <Card>
-            <CardHeader title="Alert Summary" icon={<AlertCircle size={16} />} />
-            <div className="rounded-lg border border-warning-500/20 bg-warning-500/5 px-4 py-3 mb-4">
-              <p className="text-sm text-ink-200">{alert.summary}</p>
-            </div>
-
-            {/* Detection sequence */}
             <div>
-              <h4 className="text-xs font-semibold text-ink-400 uppercase tracking-wide mb-3">Detection Sequence</h4>
-              <div className="space-y-0">
-                {alert.detectionSequence.map((step, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    {/* Vertical line + dot */}
-                    <div className="flex flex-col items-center flex-shrink-0">
-                      <div className={classNames(
-                        'w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold',
-                        step.reached ? 'bg-accent-600/20 text-accent-400 border border-accent-600/40' : 'bg-ink-700 text-ink-500 border border-ink-600',
-                      )}>
-                        {i + 1}
-                      </div>
-                      {i < alert.detectionSequence.length - 1 && (
-                        <div className={classNames('w-px h-7', step.reached ? 'bg-accent-600/30' : 'bg-ink-700')} />
-                      )}
-                    </div>
-                    {/* Label */}
-                    <div className="pt-1.5 pb-2">
-                      <span className={classNames('text-sm', step.reached ? 'text-ink-100' : 'text-ink-500')}>
-                        {step.label}
-                      </span>
-                    </div>
-                    {/* Arrow for flow */}
-                    {i < alert.detectionSequence.length - 1 && (
-                      <div className="hidden" />
-                    )}
-                  </div>
-                ))}
+              <h1 className="text-xl font-bold text-white">{alert.summary || meta.label}</h1>
+              <div className="flex items-center gap-3 mt-2">
+                <PriorityBadge priority={alert.priority} />
+                <span className="text-ink-600">·</span>
+                <StatusBadge status={alert.status} />
               </div>
             </div>
-          </Card>
+          </div>
         </div>
 
-        {/* Right: Actions + metadata */}
-        <div className="space-y-5">
-          {/* Actions */}
-          <Card>
-            <CardHeader title="Actions" icon={<FileCheck size={16} />} />
-            <div className="space-y-2">
-              <Button
-                variant="primary"
-                className="w-full"
-                disabled={!canAcknowledge}
-                onClick={() => handleStatusChange('acknowledged')}
-              >
-                <CheckCircle2 size={16} />
-                Acknowledge
-              </Button>
-              <Button
-                variant="secondary"
-                className="w-full"
-                disabled={!canResolve}
-                onClick={() => handleStatusChange('resolved')}
-              >
-                <FileCheck size={16} />
-                Resolve
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full"
-                disabled={!canReview}
-                onClick={() => handleStatusChange('needs_review')}
-              >
-                <AlertCircle size={16} />
-                Needs Review
-              </Button>
+        {/* Two-Column Body */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-ink-800">
+          
+          {/* Left: Video Evidence */}
+          <div className="lg:col-span-2 p-6 bg-ink-900/50">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-bold text-ink-100 uppercase tracking-wide flex items-center gap-2">
+                <Video size={16} className="text-steel-400" /> Video Evidence
+              </h2>
             </div>
+            <VideoPlayer
+              cameraName={camera?.name ?? 'Unknown'}
+              location={camera?.location ?? ''}
+              durationSec={alert.clipDurationSec}
+              confidence={alert.confidence}
+            />
+          </div>
 
-            {/* Status flow indicator */}
-            <div className="mt-4 pt-4 border-t border-ink-700">
-              <div className="text-[10px] font-semibold text-ink-500 uppercase tracking-wide mb-2">Status Flow</div>
-              <div className="flex items-center gap-1.5 text-xs">
-                {(['new', 'acknowledged', 'resolved'] as AlertStatus[]).map((s, i) => (
-                  <div key={s} className="flex items-center gap-1.5">
-                    <span className={classNames(
-                      'px-1.5 py-0.5 rounded font-medium',
-                      alert.status === s ? 'bg-steel-600/30 text-steel-200' : 'text-ink-500',
-                    )}>
-                      {s === 'needs_review' ? 'Review' : s.replace('_', ' ')}
-                    </span>
-                    {i < 2 && <ChevronRight size={12} className="text-ink-600" />}
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-center gap-1.5 text-xs mt-1.5 text-ink-500">
-                <span className="px-1.5 py-0.5 rounded">new</span>
-                <ChevronRight size={12} className="text-ink-600" />
-                <span className="px-1.5 py-0.5 rounded">needs_review</span>
-              </div>
-            </div>
-          </Card>
-
-          {/* Metadata */}
-          <Card>
-            <CardHeader title="Alert Metadata" icon={<Tag size={16} />} />
-            <dl className="space-y-2.5 text-sm">
+          {/* Right: Incident Information */}
+          <div className="p-6 bg-ink-950">
+            <h2 className="text-sm font-bold text-ink-100 uppercase tracking-wide flex items-center gap-2 mb-6">
+              <FileCheck size={16} className="text-steel-400" /> Incident Information
+            </h2>
+            
+            <dl className="space-y-4">
               <MetaRow icon={<StoreIcon size={14} />} label="Store" value={store?.name ?? '—'} />
-              <MetaRow icon={<CameraIcon size={14} />} label="Camera" value={camera ? `${camera.name} — ${camera.location}` : '—'} />
-              <MetaRow icon={<AlertCircle size={14} />} label="Detection Type" value={meta.label} />
+              <MetaRow icon={<CameraIcon size={14} />} label="Camera" value={camera ? camera.name : '—'} subValue={camera?.location} />
               <MetaRow icon={<Clock size={14} />} label="Timestamp" value={formatDateLong(alert.timestamp)} />
-              <MetaRow icon={<Cpu size={14} />} label="AI Confidence" value={`${alert.confidence}%`} />
-              <MetaRow icon={<Tag size={14} />} label="Alert Priority" value={PRIORITY_META[alert.priority].label} />
-              <MetaRow icon={<Video size={14} />} label="Clip Duration" value={formatDuration(alert.clipDurationSec)} />
-              <MetaRow icon={<Activity size={14} />} label="Detection Status" value={alert.reviewed ? 'Reviewed' : 'Pending review'} />
+              <MetaRow icon={<Cpu size={14} />} label="Confidence" value={`${alert.confidence}%`} />
+              <MetaRow icon={<AlertCircle size={14} />} label="Detection Type" value={meta.label} />
+              <MetaRow icon={<Activity size={14} />} label="Duration" value={formatDuration(alert.clipDurationSec)} />
+              <MetaRow icon={<Tag size={14} />} label="ROI Zone" value="Default Zone" />
             </dl>
-          </Card>
-
-          {/* Go to camera config */}
-          {camera && (
-            <Card className="hover:border-ink-600 transition-colors cursor-pointer" onClick={() => navigate(`/cameras/${camera.id}/configure`)}>
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-steel-600/15 border border-steel-600/30 flex items-center justify-center text-steel-400 flex-shrink-0">
-                  <CameraIcon size={18} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-ink-100">Configure Camera</div>
-                  <div className="text-xs text-ink-400">View & edit AI settings for {camera.name}</div>
-                </div>
-                <ChevronRight size={16} className="text-ink-500" />
-              </div>
-            </Card>
-          )}
+          </div>
         </div>
-      </div>
+
+        {/* Footer: Alert Actions */}
+        <div className="p-6 bg-ink-900 border-t border-ink-800">
+          <h2 className="text-[11px] font-bold text-ink-400 uppercase tracking-wide mb-3">Alert Actions</h2>
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <Button variant="primary" className="w-full sm:w-auto" disabled={!canAcknowledge} onClick={() => handleStatusChange('acknowledged')}>
+              <CheckCircle2 size={16} className="mr-2" /> Acknowledge
+            </Button>
+            <Button variant="secondary" className="w-full sm:w-auto border-success-500/30 text-success-300 hover:bg-success-500/10" disabled={!canResolve} onClick={() => handleStatusChange('resolved')}>
+              <Check size={16} className="mr-2" /> Resolve Incident
+            </Button>
+            <Button variant="ghost" className="w-full sm:w-auto" disabled={!canReview} onClick={() => handleStatusChange('needs_review')}>
+              <AlertCircle size={16} className="mr-2" /> Needs Review
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* Incident Timeline */}
+      <Card>
+        <CardHeader title="Incident Timeline" icon={<Clock size={16} />} />
+        <div className="mt-6 ml-2 border-l-2 border-ink-800 pl-6 space-y-6">
+          <div className="relative">
+            <div className="absolute -left-[31px] bg-ink-900 border-2 border-steel-500 w-4 h-4 rounded-full" />
+            <div className="text-xs text-ink-400 mb-1">{formatDateLong(alert.timestamp)}</div>
+            <div className="text-sm font-medium text-white">Potential concealment detected</div>
+          </div>
+          <div className="relative">
+            <div className="absolute -left-[31px] bg-ink-900 border-2 border-danger-500 w-4 h-4 rounded-full" />
+            <div className="text-xs text-ink-400 mb-1">3 seconds later</div>
+            <div className="text-sm font-medium text-white">Alert generated in VORTEX.AI</div>
+          </div>
+          {alert.status === 'acknowledged' || alert.status === 'resolved' ? (
+            <div className="relative">
+              <div className="absolute -left-[31px] bg-ink-900 border-2 border-warning-500 w-4 h-4 rounded-full" />
+              <div className="text-xs text-ink-400 mb-1">Status changed</div>
+              <div className="text-sm font-medium text-white">Alert acknowledged by operator</div>
+            </div>
+          ) : null}
+          {alert.status === 'resolved' ? (
+            <div className="relative">
+              <div className="absolute -left-[31px] bg-success-500 border-2 border-success-500 w-4 h-4 rounded-full" />
+              <div className="text-xs text-ink-400 mb-1">Status changed</div>
+              <div className="text-sm font-medium text-white">Alert resolved</div>
+            </div>
+          ) : null}
+        </div>
+      </Card>
     </div>
   );
 }
 
-function MetaRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function MetaRow({ icon, label, value, subValue }: { icon: React.ReactNode; label: string; value: string; subValue?: string }) {
   return (
-    <div className="flex items-start justify-between gap-3">
-      <dt className="flex items-center gap-2 text-ink-400 text-xs flex-shrink-0">
+    <div className="flex flex-col gap-1 py-1">
+      <dt className="flex items-center gap-2 text-ink-400 text-xs">
         <span className="text-ink-500">{icon}</span>
         {label}
       </dt>
-      <dd className="text-ink-100 text-sm text-right">{value}</dd>
+      <dd className="text-ink-100 text-sm font-medium ml-6">
+        {value}
+        {subValue && <div className="text-xs font-normal text-ink-500 mt-0.5">{subValue}</div>}
+      </dd>
     </div>
   );
 }

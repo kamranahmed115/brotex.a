@@ -110,7 +110,7 @@ export const cameras: Camera[] = [
   { id: 'cam_08', storeId: 'store_1', name: 'Camera 08', location: 'Aisle 3', domain: 'inside', status: 'online', lastActive: '2026-08-29T21:48:00Z', aiEnabled: true, aiMode: 'shoplifting', config: shopliftingConfig(true, ['Pocket / Pants Concealment', 'Jacket / Hoodie / Shirt Concealment']) },
   { id: 'cam_09', storeId: 'store_1', name: 'Camera 09', location: 'Aisle 4', domain: 'inside', status: 'online', lastActive: '2026-08-29T21:48:00Z', aiEnabled: true, aiMode: 'shoplifting', config: shopliftingConfig(true, ['Bag / Purse / Backpack Concealment']) },
   { id: 'cam_10', storeId: 'store_1', name: 'Camera 10', location: 'Side of Building', domain: 'outside', status: 'online', lastActive: '2026-08-29T21:48:00Z', aiEnabled: true, aiMode: 'restricted_access', config: restrictedConfig('Side of building', 'high') },
-  { id: 'cam_11', storeId: 'store_1', name: 'Camera 11', location: 'Dumpster Area', domain: 'outside', status: 'online', lastActive: '2026-08-29T21:48:00Z', aiEnabled: true, aiMode: 'restricted_access', config: restrictedConfig('Dumpster', 'medium') },
+  { id: 'cam_11', storeId: 'store_1', name: 'Camera 11', location: 'Dumpster Area', domain: 'outside', status: 'online', lastActive: '2026-08-29T21:48:00Z', aiEnabled: true, aiMode: 'restricted_access', config: restrictedConfig('Dumpster', 'high') },
   { id: 'cam_12', storeId: 'store_1', name: 'Camera 12', location: 'Loading Area', domain: 'outside', status: 'online', lastActive: '2026-08-29T21:48:00Z', aiEnabled: true, aiMode: 'restricted_access', config: restrictedConfig('Loading area', 'high') },
   { id: 'cam_13', storeId: 'store_1', name: 'Camera 13', location: 'Aisle 5', domain: 'inside', status: 'online', lastActive: '2026-08-29T21:48:00Z', aiEnabled: true, aiMode: 'shoplifting', config: shopliftingConfig(true, ['Pocket / Pants Concealment', 'Waistband / Lower-Body Concealment']) },
   { id: 'cam_14', storeId: 'store_1', name: 'Camera 14', location: 'Employee Entrance', domain: 'outside', status: 'online', lastActive: '2026-08-29T21:48:00Z', aiEnabled: true, aiMode: 'restricted_access', config: restrictedConfig('Employee entrance', 'high') },
@@ -205,11 +205,14 @@ export const notifications: NotificationItem[] = [
 ];
 
 export const users: AppUser[] = [
-  { id: 'u1', name: 'Robert Hayes', email: 'r.hayes@vortexsec.com', role: 'owner', storeIds: ['store_1', 'store_2', 'store_3'], status: 'active', lastActive: '2026-08-29T21:40:00Z' },
-  { id: 'u2', name: 'Diane Whitfield', email: 'd.whitfield@vortexsec.com', role: 'manager', storeIds: ['store_1'], status: 'active', lastActive: '2026-08-29T21:15:00Z' },
-  { id: 'u3', name: 'Marcus Lee', email: 'm.lee@vortexsec.com', role: 'manager', storeIds: ['store_2', 'store_3'], status: 'active', lastActive: '2026-08-29T18:30:00Z' },
-  { id: 'u4', name: 'Priya Nair', email: 'p.nair@vortexsec.com', role: 'staff', storeIds: ['store_1'], status: 'active', lastActive: '2026-08-29T17:00:00Z' },
-  { id: 'u5', name: 'Tom Brennan', email: 't.brennan@vortexsec.com', role: 'staff', storeIds: ['store_2'], status: 'disabled', lastActive: '2026-08-20T09:00:00Z' },
+  { id: 'u1', name: 'John Carter', email: 'john.carter@example.com', role: 'owner', storeIds: ['store_1', 'store_2', 'store_3'], status: 'active', lastActive: new Date(Date.now() - 2 * 60000).toISOString() },
+  { id: 'u2', name: 'Sarah Mitchell', email: 'sarah.mitchell@example.com', role: 'manager', storeIds: ['store_1'], status: 'active', lastActive: new Date(Date.now() - 12 * 60000).toISOString() },
+  { id: 'u3', name: 'David Wilson', email: 'david.wilson@example.com', role: 'manager', storeIds: ['store_2'], status: 'active', lastActive: new Date(Date.now() - 34 * 60000).toISOString() },
+  { id: 'u4', name: 'Mike Anderson', email: 'mike.anderson@example.com', role: 'staff', storeIds: ['store_1'], status: 'active', lastActive: new Date(Date.now() - 60 * 60000).toISOString() },
+  { id: 'u5', name: 'Emily Brown', email: 'emily.brown@example.com', role: 'staff', storeIds: ['store_3'], status: 'disabled', lastActive: new Date(Date.now() - 48 * 3600000).toISOString() },
+  { id: 'u6', name: 'Robert Hayes', email: 'r.hayes@example.com', role: 'manager', storeIds: ['store_3'], status: 'active', lastActive: new Date(Date.now() - 15 * 60000).toISOString() },
+  { id: 'u7', name: 'Priya Nair', email: 'p.nair@example.com', role: 'staff', storeIds: ['store_1', 'store_2'], status: 'active', lastActive: new Date(Date.now() - 120 * 60000).toISOString() },
+  { id: 'u8', name: 'Tom Brennan', email: 't.brennan@example.com', role: 'staff', storeIds: ['store_2'], status: 'disabled', lastActive: new Date(Date.now() - 200 * 3600000).toISOString() },
 ];
 
 // Current logged-in user for mock auth

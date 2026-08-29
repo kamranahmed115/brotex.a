@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BellAlert, ChevronRight, FileClock, AlertCircle } from 'lucide-react';
+import { Bell, ChevronRight, FileClock, AlertCircle } from 'lucide-react';
 import { useApp, useAlertsForSelected, useStoresForSelection } from '@/store/AppContext';
 import { ALERT_TYPE_META, STATUS_META } from '@/types';
 import type { Alert, AlertStatus } from '@/types';
@@ -30,7 +30,7 @@ export function AlertsPage({ initialFilter }: AlertsPageProps) {
   const [statusChip, setStatusChip] = useState<string>(initialFilter === 'needs_review' ? 'needs_review' : initialFilter === 'history' ? 'resolved' : 'all');
 
   const pageTitle = initialFilter === 'needs_review' ? 'Needs Review' : initialFilter === 'history' ? 'Alert History' : 'Alerts';
-  const pageIcon = initialFilter === 'needs_review' ? <AlertCircle size={20} /> : initialFilter === 'history' ? <FileClock size={20} /> : <BellAlert size={20} />;
+  const pageIcon = initialFilter === 'needs_review' ? <AlertCircle size={20} /> : initialFilter === 'history' ? <FileClock size={20} /> : <Bell size={20} />;
 
   const filtered = useMemo(() => {
     let result = filterAlerts(alerts, filters, cameras, stores);
@@ -53,8 +53,8 @@ export function AlertsPage({ initialFilter }: AlertsPageProps) {
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-ink-800 border border-ink-700 flex items-center justify-center text-ink-300">
-            {pageIcon}
+          <div className="w-10 h-10 rounded-lg bg-danger-500/10 border border-danger-500/20 flex items-center justify-center text-danger-400">
+            <Bell size={20} />
           </div>
           <div>
             <h1 className="text-xl font-bold text-white">{pageTitle}</h1>

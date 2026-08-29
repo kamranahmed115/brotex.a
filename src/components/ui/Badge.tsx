@@ -92,8 +92,8 @@ export function AIBadge({ enabled, mode }: { enabled: boolean; mode?: string | n
     loitering: 'Loitering',
   };
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-md border border-accent-600/30 bg-accent-600/10 px-2 py-0.5 text-xs font-medium text-accent-400">
-      <span className="w-1.5 h-1.5 rounded-full bg-accent-400" />
+    <span className="inline-flex items-center gap-1.5 rounded-md border border-steel-600/30 bg-steel-600/10 px-2 py-0.5 text-xs font-medium text-steel-300">
+      <span className="w-1.5 h-1.5 rounded-full bg-steel-400" />
       AI: {mode ? modeLabels[mode] : 'Active'}
     </span>
   );

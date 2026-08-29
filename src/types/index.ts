@@ -180,10 +180,10 @@ export const DAY_LABELS: Record<DayOfWeek, string> = {
 };
 
 export const SHOPIFTING_CATEGORIES = [
-  'Pocket / Pants Concealment',
-  'Waistband / Lower-Body Concealment',
-  'Jacket / Hoodie / Shirt Concealment',
-  'Bag / Purse / Backpack Concealment',
+  'Body Concealment',
+  'Pocket Concealment',
+  'Purse / Handbag Concealment',
+  'Backpack / Bag Concealment',
 ];
 
 export const RESTRICTED_ZONES = [

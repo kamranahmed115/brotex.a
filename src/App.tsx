@@ -14,6 +14,7 @@ import { StoresPage } from '@/pages/StoresPage';
 import { StoreDetailsPage } from '@/pages/StoreDetailsPage';
 import { AnalyticsPage } from '@/pages/AnalyticsPage';
 import { UsersPage } from '@/pages/UsersPage';
+import { RolesPage } from '@/pages/RolesPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 
 function ScrollToTop() {
@@ -48,6 +49,7 @@ function AppRoutes() {
           <Route path="/stores/:id" element={<StoreDetailsPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/users" element={<UsersPage />} />
+          <Route path="/roles" element={<RolesPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/overview" replace />} />
         </Routes>

@@ -1,15 +1,7 @@
-import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, useEffect, type ReactNode } from 'react';
 import type { Store, Camera, Alert, NotificationItem, AppUser, ROI } from '@/types';
-import {
-  stores as initialStores,
-  cameras as initialCameras,
-  alerts as initialAlerts,
-  notifications as initialNotifications,
-  users as initialUsers,
-  rois as initialRois,
-  currentUser,
-  ALL_STORES_ID,
-} from '@/data/mockData';
+import { currentUser, ALL_STORES_ID } from '@/data/mockData';
+import { api } from '@/services/api';
 import { ALERT_TYPE_META } from '@/types';
 
 interface AppState {
@@ -30,9 +22,12 @@ interface AppState {
   notifications: NotificationItem[];
   users: AppUser[];
   rois: ROI[];
+  
+  // Loading
+  isLoading: boolean;
 
   // Alert actions
-  updateAlertStatus: (alertId: string, status: Alert['status']) => void;
+  updateAlertStatus: (alertId: string, status: Alert['status']) => Promise<void>;
 
   // Notification actions
   markNotificationRead: (id: string) => void;
@@ -43,7 +38,13 @@ interface AppState {
   deleteROI: (roiId: string) => void;
 
   // Camera config
-  updateCameraConfig: (cameraId: string, config: Camera['config']) => void;
+  updateCameraConfig: (cameraId: string, config: Camera['config']) => Promise<void>;
+
+  // Users
+  addUser: (user: AppUser) => Promise<void>;
+  updateUserRole: (userId: string, role: AppUser['role']) => Promise<void>;
+  updateUserStatus: (userId: string, status: AppUser['status']) => Promise<void>;
+  updateUserStore: (userId: string, storeIds: string[]) => Promise<void>;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -52,15 +53,43 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<AppUser | null>(null);
   const [selectedStoreId, setSelectedStoreId] = useState<string>(ALL_STORES_ID);
-  const [stores] = useState<Store[]>(initialStores);
-  const [cameras, setCameras] = useState<Camera[]>(initialCameras);
-  const [alerts, setAlerts] = useState<Alert[]>(initialAlerts);
-  const [notifications, setNotifications] = useState<NotificationItem[]>(initialNotifications);
-  const [users] = useState<AppUser[]>(initialUsers);
-  const [rois, setRois] = useState<ROI[]>(initialRois);
+  
+  const [stores, setStores] = useState<Store[]>([]);
+  const [cameras, setCameras] = useState<Camera[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [users, setUsers] = useState<AppUser[]>([]);
+  const [rois, setRois] = useState<ROI[]>([]);
+  
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Initial fetch
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true);
+      try {
+        const [fetchedStores, fetchedCameras, fetchedAlerts, fetchedNotifs, fetchedUsers] = await Promise.all([
+          api.getStores(),
+          api.getCameras(),
+          api.getAlerts(),
+          api.getNotifications(),
+          api.getUsers()
+        ]);
+        setStores(fetchedStores);
+        setCameras(fetchedCameras);
+        setAlerts(fetchedAlerts);
+        setNotifications(fetchedNotifs);
+        setUsers(fetchedUsers);
+      } catch (e) {
+        console.error("Failed to fetch initial data", e);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
 
   const login = useCallback((email: string, _password: string) => {
-    // Mock auth — accept any non-empty credentials
     if (email.trim().length > 0 && _password.length > 0) {
       setIsAuthenticated(true);
       setUser(currentUser);
@@ -74,8 +103,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
-  const updateAlertStatus = useCallback((alertId: string, status: Alert['status']) => {
-    setAlerts(prev => prev.map(a => (a.id === alertId ? { ...a, status, reviewed: true } : a)));
+  const updateAlertStatus = useCallback(async (alertId: string, status: Alert['status']) => {
+    try {
+      const updated = await api.updateAlertStatus(alertId, status);
+      setAlerts(prev => prev.map(a => (a.id === alertId ? { ...updated, reviewed: true } : a)));
+    } catch (e) {
+      console.error(e);
+    }
   }, []);
 
   const markNotificationRead = useCallback((id: string) => {
@@ -98,12 +132,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setRois(prev => prev.filter(r => r.id !== roiId));
   }, []);
 
-  const updateCameraConfig = useCallback((cameraId: string, config: Camera['config']) => {
-    setCameras(prev => prev.map(c =>
-      c.id === cameraId
-        ? { ...c, aiEnabled: config.aiEnabled, aiMode: config.aiEnabled ? config.mode : null, config }
-        : c
-    ));
+  const updateCameraConfig = useCallback(async (cameraId: string, config: Camera['config']) => {
+    try {
+      const updated = await api.updateCameraConfig(cameraId, config);
+      setCameras(prev => prev.map(c => c.id === cameraId ? updated : c));
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
+  const addUser = useCallback(async (u: AppUser) => {
+    try {
+      const added = await api.addUser(u);
+      setUsers(prev => [...prev, added]);
+    } catch (e) { console.error(e); }
+  }, []);
+
+  const updateUserRole = useCallback(async (userId: string, role: AppUser['role']) => {
+    try {
+      const updated = await api.updateUserRole(userId, role);
+      if (updated) setUsers(prev => prev.map(u => u.id === userId ? updated : u));
+    } catch (e) { console.error(e); }
+  }, []);
+
+  const updateUserStatus = useCallback(async (userId: string, status: AppUser['status']) => {
+    try {
+      const updated = await api.updateUserStatus(userId, status);
+      if (updated) setUsers(prev => prev.map(u => u.id === userId ? updated : u));
+    } catch (e) { console.error(e); }
+  }, []);
+
+  const updateUserStore = useCallback(async (userId: string, storeIds: string[]) => {
+    try {
+      const updated = await api.updateUserStore(userId, storeIds);
+      if (updated) setUsers(prev => prev.map(u => u.id === userId ? updated : u));
+    } catch (e) { console.error(e); }
   }, []);
 
   const value = useMemo<AppState>(() => ({
@@ -119,13 +182,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     notifications,
     users,
     rois,
+    isLoading,
     updateAlertStatus,
     markNotificationRead,
     markAllNotificationsRead,
     saveROI,
     deleteROI,
     updateCameraConfig,
-  }), [isAuthenticated, user, login, logout, selectedStoreId, stores, cameras, alerts, notifications, users, rois, updateAlertStatus, markNotificationRead, markAllNotificationsRead, saveROI, deleteROI, updateCameraConfig]);
+    addUser,
+    updateUserRole,
+    updateUserStatus,
+    updateUserStore,
+  }), [isAuthenticated, user, login, logout, selectedStoreId, stores, cameras, alerts, notifications, users, rois, isLoading, updateAlertStatus, markNotificationRead, markAllNotificationsRead, saveROI, deleteROI, updateCameraConfig, addUser, updateUserRole, updateUserStatus, updateUserStore]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
@@ -136,7 +204,6 @@ export function useApp(): AppState {
   return ctx;
 }
 
-// Selector helpers
 export function useStoresForSelection(): Store[] {
   const { stores, user } = useApp();
   if (!user || user.role === 'owner') return stores;
